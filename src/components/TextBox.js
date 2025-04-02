@@ -16,33 +16,35 @@ const TextBox = ({ walletConnectionRef, customText, setCustomText, selectedDinos
     // Wrap headValues in useMemo hook
     const headValues = useMemo(() => ["peker", "alladin", "wapal", "loyal hiker", "mo"], []);
 
-    const fetchPairs = async () => {
+    const fetchPairs = useCallback(async () => {
         try {
-            const response = await axios.get(`https://backend-seven-pi-82.vercel.app/api/data/pairs.json`);  // Updated URL
-            const pairsArray = response.data.map(pair => [pair.headValue, pair.dinosaur]);
+            const response = await axios.get('/api/fetchPairs.js');
+            const pairsData = response.data;
+            const pairsArray = pairsData.map(pair => [pair.headValue, pair.dinosaur]);
             const pairsSet = new Set(pairsArray.map(pair => pair[0]));
             setPairs(pairsArray);
             setHeadValuesSet(pairsSet);
         } catch (error) {
             console.error('Error fetching pairs:', error);
         }
-    };
+    }, []);
 
     useEffect(() => {
         fetchPairs();
-    }, []);
+    }, [fetchPairs]);
 
-    const savePairToFile = useCallback((headValue, dinosaur, customTextInput = "") => {
+    const savePairToFile = useCallback(async (headValue, dinosaur, customTextInput = "") => {
         const newPair = { headValue, dinosaur, customTextInput };
         const updatedPairs = pairs.filter(pair => pair[0] !== headValue).concat([newPair]);
         setPairs(updatedPairs);
         setHeadValuesSet(new Set(updatedPairs.map(pair => pair.headValue)));
 
-        axios.post(`https://backend-seven-pi-82.vercel.app/update-pairs`, { pairs: updatedPairs })  // Updated URL
-            .then(response => {
-                setCustomText(`Got it, ${headValue} will have ${dinosaur} as its aptosaur`);
-            })
-            .catch(err => console.error('Error writing to pairs file:', err));
+        try {
+            await axios.post('/api/updatePairs.js', { headValue, dinosaur, customTextInput });
+            setCustomText(`Got it, ${headValue} will have ${dinosaur} as its aptosaur`);
+        } catch (error) {
+            console.error('Error updating pairs:', error);
+        }
     }, [pairs, setCustomText]);
 
     const fetchNfts = useCallback(async () => {
@@ -176,8 +178,8 @@ const TextBox = ({ walletConnectionRef, customText, setCustomText, selectedDinos
                     savePairToFile(currentHeadAttribute, selectedDinosaur, specialRequestInput);
                     setCustomText(`Got it, ${currentHeadAttribute} will have ${selectedDinosaur} as its aptosaur`);
 
-                    // Call API to update pairs.json
-                    axios.post(`https://backend-seven-pi-82.vercel.app/update-pairs`, {
+                    // Call API to update pairs
+                    axios.post('/api/updatePairs', {
                         headValue: currentHeadAttribute,
                         dinosaur: selectedDinosaur,
                         customTextInput: specialRequestInput
@@ -203,8 +205,8 @@ const TextBox = ({ walletConnectionRef, customText, setCustomText, selectedDinos
         savePairToFile(currentHeadAttribute, selectedDinosaur, "none");
         setCustomText(`Got it, ${currentHeadAttribute} will have ${selectedDinosaur} as its aptosaur with no special request`);
 
-        // Call API to update pairs.json
-        axios.post(`https://backend-seven-pi-82.vercel.app/update-pairs`, {
+        // Call API to update pairs
+        axios.post('/api/updatePairs', {
             headValue: currentHeadAttribute,
             dinosaur: selectedDinosaur,
             customTextInput: "none"
@@ -301,7 +303,7 @@ const TextBox = ({ walletConnectionRef, customText, setCustomText, selectedDinos
                     {customText.includes("Do you want to change it?") ? (
                         <>
                             {customText.split("Do you want to change it?")[0]}
-                            Do you want to select <strong>{selectedDinosaur}</strong> as the Aptosaur for <strong>{currentHeadAttribute}</strong>? <span className="clickable" id="yesButton">YES</span> or <span className="clickable" id="noButton">NO</span>?
+                            Do you want to select <strong>{selectedDinosaur}</strong> as the Aptosaur for <strong>{currentHeadAttribute}</strong>? <span className="clickable" id="yesButton">YES</span> or <span class="clickable" id="noButton">NO</span>?
                         </>
                     ) : (
                         <span dangerouslySetInnerHTML={{ __html: customText }} />

@@ -3,11 +3,17 @@ import path from 'path';
 
 export default async function handler(req, res) {
     if (req.method === 'POST') {
-        const { pairs } = req.body;
+        const { headValue, dinosaur, customTextInput } = req.body;
 
         try {
             const jsonDirectory = path.join(process.cwd(), 'data');
-            await fs.writeFile(jsonDirectory + '/pairs.json', JSON.stringify(pairs, null, 2));
+            const fileContents = await fs.readFile(path.join(jsonDirectory, 'pairs.json'), 'utf8');
+            const pairs = JSON.parse(fileContents);
+
+            const updatedPairs = pairs.filter(pair => pair.headValue !== headValue);
+            updatedPairs.push({ headValue, dinosaur, customTextInput });
+
+            await fs.writeFile(path.join(jsonDirectory, 'pairs.json'), JSON.stringify(updatedPairs, null, 2));
             res.status(200).json({ success: true });
         } catch (error) {
             console.error('Error updating pairs:', error);
