@@ -18,7 +18,7 @@ const TextBox = ({ walletConnectionRef, customText, setCustomText, selectedDinos
 
     const fetchPairs = useCallback(async () => {
         try {
-            const response = await axios.get('/api/fetchPairs.js');
+            const response = await axios.get('/api/fetchPairs');
             const pairsData = response.data;
             const pairsArray = pairsData.map(pair => [pair.headValue, pair.dinosaur]);
             const pairsSet = new Set(pairsArray.map(pair => pair[0]));
@@ -40,7 +40,7 @@ const TextBox = ({ walletConnectionRef, customText, setCustomText, selectedDinos
         setHeadValuesSet(new Set(updatedPairs.map(pair => pair.headValue)));
 
         try {
-            await axios.post('/api/updatePairs.js', { headValue, dinosaur, customTextInput });
+            await axios.post('/api/updatePairs', { headValue, dinosaur, customTextInput });
             setCustomText(`Got it, ${headValue} will have ${dinosaur} as its aptosaur`);
         } catch (error) {
             console.error('Error updating pairs:', error);
